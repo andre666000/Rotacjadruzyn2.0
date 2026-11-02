@@ -17,6 +17,7 @@ jobs:
     env:
       DOWNLOAD_URL: 'https://sdmntprdenmarkeast.oaiusercontent.com/files/00000000-ab30-8210-ae56-4d81095dead7/raw?se=2026-11-02T04%3A41%3A26Z&sp=r&sv=2026-02-06&sr=b&scid=4e5fe2cf-3075-5edd-991b-75ddabcd86ef&skoid=d294dba5-36f7-432b-aab8-935656489847&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-01T23%3A45%3A13Z&ske=2026-11-02T23%3A45%3A13Z&sks=b&skv=2026-02-06&sig=Vbyf2iLYoAv4iMpHjtb7g8bTX1OReORAcjQbuRQIS1s%3D'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: andre666000/Rotacjadruzyn2.0
     steps:
       - name: Fetch verified signed APK archive
         shell: bash
