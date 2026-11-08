@@ -1,0 +1,38 @@
+{
+  "start": 0,
+  "count": 4,
+  "parts": [
+    {
+      "sha": "c85fbe66c8baf50b26e3a11a0983c5e6f03c0678",
+      "chars": 2097152
+    },
+    {
+      "sha": "ed0c26e8c2e0e0ab5ff3d37df81a577b00f3bcc5",
+      "chars": 2097152
+    },
+    {
+      "sha": "f57623c28fa9be09e4978f02d894a5f799a7b72e",
+      "chars": 2097152
+    },
+    {
+      "sha": "5d52a0b868c62ad890d4cdfd4c3ec6c668c3d1fe",
+      "chars": 2097152
+    },
+    {
+      "sha": "1f9043ac8ffe32c46d6cc02e3e16586f0f0e19cd",
+      "chars": 2097152
+    },
+    {
+      "sha": "09918f7e6afcb772f78a48530b0a9544abd82794",
+      "chars": 2097152
+    },
+    {
+      "sha": "2dbd87cc707b9302c63d2c0e15fbf142f34e475b",
+      "chars": 2097152
+    },
+    {
+      "sha": "a2438c3e9924cb9f91570ee82c6a6881a3635d08",
+      "chars": 2097152
+    }
+  ]
+}
