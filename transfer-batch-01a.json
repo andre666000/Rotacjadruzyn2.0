@@ -1,0 +1,22 @@
+{
+  "start": 4,
+  "count": 2,
+  "parts": [
+    {
+      "sha": "c1ef0df123b347e8b8f6e998dd540047d64e0df8",
+      "chars": 2097152
+    },
+    {
+      "sha": "db3bfac225c11fedf61ec990ae7f9885d92ae843",
+      "chars": 2097152
+    },
+    {
+      "sha": "11467ba128910745d0ef06db21241d67096e51c0",
+      "chars": 2097152
+    },
+    {
+      "sha": "601522fad7b356153e9af505d5ba0b41405a37f5",
+      "chars": 2097152
+    }
+  ]
+}
