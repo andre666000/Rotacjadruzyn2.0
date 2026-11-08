@@ -1,0 +1,77 @@
+name: Publish verified DragonSpin Android 1.3.7 APK
+
+on:
+  push:
+    branches:
+      - release-validation-20261108
+    paths:
+      - "apk-publish-manifest.json"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reassemble and verify Android APK from Git blob shards
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import base64,hashlib,json,os,urllib.request
+          from pathlib import Path
+          m=json.loads(Path('apk-publish-manifest.json').read_text())
+          assert m['version_code']==27
+          assert m['asset_name']=='DragonSpin-v1.3.7-build27.apk'
+          assert m['app']=='pl.rotacjadruzyn'
+          assert len(m['parts'])>1
+          repo=os.environ['GH_REPO'];token=os.environ['GH_TOKEN']
+          with open('/tmp/base64-payload.txt','wb') as f:
+              for part in m['parts']:
+                  sha=part['sha']
+                  assert len(sha)==40 and all(c in '0123456789abcdef' for c in sha)
+                  request=urllib.request.Request(
+                    f'https://api.github.com/repos/{repo}/git/blobs/{sha}',
+                    headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json'})
+                  with urllib.request.urlopen(request,timeout=90) as response:
+                      data=json.load(response)
+                  assert data['encoding']=='base64'
+                  chunk=base64.b64decode(data['content'])
+                  assert len(chunk)==part['chars']
+                  f.write(chunk)
+          payload=Path('/tmp/base64-payload.txt').read_bytes()
+          binary=base64.b64decode(payload,validate=True)
+          assert len(binary)==m['size_bytes']
+          assert hashlib.sha256(binary).hexdigest()==m['expected_sha256']
+          Path(m['asset_name']).write_bytes(binary)
+          print('APK SHA256 validated:',m['expected_sha256'])
+          PY
+      - name: Verify package name, versionCode and existing update signing certificate
+        run: |
+          set -euo pipefail
+          APK="DragonSpin-v1.3.7-build27.apk"
+          SIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
+          "$SIGNER" verify --print-certs "$APK" | tee signer.txt
+          grep -Ei 'certificate SHA-256 digest: f0e9a6e23e5c54279e1a24f2fa141df9749b3447fc531c6b5c9256b8deaab608' signer.txt
+          "$AAPT" dump badging "$APK" | grep -F "package: name='pl.rotacjadruzyn' versionCode='27'"
+      - name: Publish downloadable PUBLIC release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TAG="1.3.7-build27"
+          FILE="DragonSpin-v1.3.7-build27.apk"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$FILE" --clobber
+          else
+            gh release create "$TAG" "$FILE" \
+              --target "$GITHUB_SHA" \
+              --title "DragonSpin Android 1.3.7 Native (build 27)" \
+              --notes "Podpisana aktualizacja APK: natywne ekrany Premium i zachowany oryginalny OCR Android. Sanktuarium pozostaje prototypem 2D. Prosimy o zgłaszanie błędów." \
+              --latest
+          fi
