@@ -24,7 +24,7 @@ jobs:
           m=json.loads(Path('transfer/manifest.json').read_text())
           assert m['app']=='pl.rotacjadruzyn' and m['version_code']==28
           assert m['asset_name']=='DragonSpin-v1.3.8-build28.apk'
-          assert 1<=len(m['parts'])<=32
+          assert 1<=len(m['parts'])<=64
           chunks=[]
           for i,p in enumerate(m['parts']):
               v=(Path('transfer')/f'part{i:02}.b64').read_text()
