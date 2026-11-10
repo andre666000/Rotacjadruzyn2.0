@@ -40,6 +40,17 @@ jobs:
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose DragonSpin-v1.3.8-build28.apk
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
+          test -n "$AAPT"
+          "$AAPT" dump badging DragonSpin-v1.3.8-build28.apk | grep -F "package: name='pl.rotacjadruzyn' versionCode='28'"
+          curl --fail --location --retry 3 \
+            "https://github.com/andre666000/Rotacjadruzyn2.0/releases/download/1.3.3-build23/DragonSpin-v1.3.3-build23.apk" \
+            --output /tmp/dragonspin-old-public.apk
+          OLD_CERT="$("$APKSIGNER" verify --print-certs /tmp/dragonspin-old-public.apk | awk '/Signer #1 certificate SHA-256 digest/{print $NF;exit}')"
+          NEW_CERT="$("$APKSIGNER" verify --print-certs DragonSpin-v1.3.8-build28.apk | awk '/Signer #1 certificate SHA-256 digest/{print $NF;exit}')"
+          test -n "$OLD_CERT"
+          test "$OLD_CERT" = "$NEW_CERT"
+          echo "Upgrade signer matches public 1.3.3 APK"
       - name: Publish public direct download
         env:
           GH_TOKEN: ${{ github.token }}
