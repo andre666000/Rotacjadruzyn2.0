@@ -1,0 +1,65 @@
+name: Publish verified DragonSpin 1.3.12 APK
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-red-dragon.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Reassemble public signed APK and verify exact binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://elvbtmookoysavtbzuln.supabase.co/storage/v1/object/public/dragonspin-apk-temp"
+          curl -fLsS --retry 3 --max-time 180 "$BASE/DragonSpin-1.3.12-build32.apk.part00" -o part00
+          curl -fLsS --retry 3 --max-time 180 "$BASE/DragonSpin-1.3.12-build32.apk.part01" -o part01
+          test "$(stat -c%s part00)" -eq 28000000
+          test "$(stat -c%s part01)" -eq 27692921
+          cat part00 part01 > DragonSpin-1.3.12.apk
+          test "$(stat -c%s DragonSpin-1.3.12.apk)" -eq 55692921
+          echo "9f7c10337d62058c979e096908dea8252846f54db8ca66e5466dbccb770403eb  DragonSpin-1.3.12.apk" | sha256sum --check
+          unzip -t DragonSpin-1.3.12.apk >/dev/null
+
+      - name: Verify APK signature, version, package and continuity with old Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
+          test -n "$APKSIGNER"
+          test -n "$AAPT"
+          "$APKSIGNER" verify --verbose DragonSpin-1.3.12.apk
+          "$AAPT" dump badging DragonSpin-1.3.12.apk | grep -F "package: name='pl.rotacjadruzyn' versionCode='32'"
+          curl -fLsS --retry 3 --max-time 180 \
+            'https://github.com/andre666000/Rotacjadruzyn2.0/releases/download/1.3.9-build29/DragonSpin-1.3.9.apk' \
+            -o old.apk
+          OLD_CERT="$("$APKSIGNER" verify --print-certs old.apk | awk '/Signer #1 certificate SHA-256 digest/{print $NF;exit}')"
+          NEW_CERT="$("$APKSIGNER" verify --print-certs DragonSpin-1.3.12.apk | awk '/Signer #1 certificate SHA-256 digest/{print $NF;exit}')"
+          test -n "$OLD_CERT"
+          test "$OLD_CERT" = "$NEW_CERT"
+          echo "Signed Android APK matches existing public build 29 signing certificate"
+
+      - name: Create public direct-download GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TAG=1.3.12-build32
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release exists: refusing to overwrite it"
+            exit 1
+          fi
+          gh release create "$TAG" DragonSpin-1.3.12.apk \
+            --target "$GITHUB_SHA" \
+            --title "DragonSpin 1.3.12 build 32 — Czerwony Smok" \
+            --notes "Nowe czerwono-czarne tło aplikacji (bez napisu Premium), nowe wizualne ekrany rotacji i wykrywania nicków. Zachowany natywny OCR ML Kit, losowanie i uprawnienia. Podpis APK zgodny z wydaniem 1.3.9; instalacja na istniejącej aplikacji bez jej odinstalowywania. SHA256: 9f7c10337d62058c979e096908dea8252846f54db8ca66e5466dbccb770403eb."
