@@ -43,6 +43,13 @@ jobs:
             -o old.apk
           OLD_CERT="$("$APKSIGNER" verify --print-certs old.apk | awk '/Signer #1 certificate SHA-256 digest/{print $NF;exit}')"
           NEW_CERT="$("$APKSIGNER" verify --print-certs DragonSpin-1.3.12.apk | awk '/Signer #1 certificate SHA-256 digest/{print $NF;exit}')"
+          echo "Build 29 signer SHA256: ${OLD_CERT:-missing}"
+          echo "Build 32 signer SHA256: ${NEW_CERT:-missing}"
+          curl -fLsS --retry 3 --max-time 180 \
+            'https://github.com/andre666000/Rotacjadruzyn2.0/releases/download/1.3.3-build23/DragonSpin-v1.3.3-build23.apk' \
+            -o baseline23.apk
+          BASE_CERT="$("$APKSIGNER" verify --print-certs baseline23.apk | awk '/Signer #1 certificate SHA-256 digest/{print $NF;exit}')"
+          echo "Build 23 signer SHA256: ${BASE_CERT:-missing}"
           test -n "$OLD_CERT"
           test "$OLD_CERT" = "$NEW_CERT"
           echo "Signed Android APK matches existing public build 29 signing certificate"
