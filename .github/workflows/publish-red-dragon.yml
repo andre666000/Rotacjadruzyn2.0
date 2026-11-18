@@ -1,4 +1,4 @@
-name: Publish verified DragonSpin 1.3.12 APK
+name: Publish verified DragonSpin 1.3.13 APK
 on:
   push:
     branches: [main]
@@ -19,14 +19,14 @@ jobs:
         run: |
           set -euo pipefail
           BASE="https://elvbtmookoysavtbzuln.supabase.co/storage/v1/object/public/dragonspin-apk-temp"
-          curl -fLsS --retry 3 --max-time 180 "$BASE/DragonSpin-1.3.12-build32.apk.part00" -o part00
-          curl -fLsS --retry 3 --max-time 180 "$BASE/DragonSpin-1.3.12-build32.apk.part01" -o part01
+          curl -fLsS --retry 3 --max-time 180 "$BASE/DragonSpin-1.3.13-build33.apk.part00" -o part00
+          curl -fLsS --retry 3 --max-time 180 "$BASE/DragonSpin-1.3.13-build33.apk.part01" -o part01
           test "$(stat -c%s part00)" -eq 28000000
-          test "$(stat -c%s part01)" -eq 27692921
-          cat part00 part01 > DragonSpin-1.3.12.apk
-          test "$(stat -c%s DragonSpin-1.3.12.apk)" -eq 55692921
-          echo "9f7c10337d62058c979e096908dea8252846f54db8ca66e5466dbccb770403eb  DragonSpin-1.3.12.apk" | sha256sum --check
-          unzip -t DragonSpin-1.3.12.apk >/dev/null
+          test "$(stat -c%s part01)" -eq 27692929
+          cat part00 part01 > DragonSpin-1.3.13.apk
+          test "$(stat -c%s DragonSpin-1.3.13.apk)" -eq 55692929
+          echo "384ee09b3423e7af6734f10a8fd1a6a6fedf7b2cb95f6710a833cb471384e609  DragonSpin-1.3.13.apk" | sha256sum --check
+          unzip -t DragonSpin-1.3.13.apk >/dev/null
 
       - name: Verify APK signature, version, package and continuity with old Android
         shell: bash
@@ -36,17 +36,17 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
           test -n "$APKSIGNER"
           test -n "$AAPT"
-          "$APKSIGNER" verify --verbose DragonSpin-1.3.12.apk
-          "$AAPT" dump badging DragonSpin-1.3.12.apk | grep -F "package: name='pl.rotacjadruzyn' versionCode='32'"
+          "$APKSIGNER" verify --verbose DragonSpin-1.3.13.apk
+          "$AAPT" dump badging DragonSpin-1.3.13.apk | grep -F "package: name='pl.rotacjadruzyn' versionCode='33'"
           curl -fLsS --retry 3 --max-time 180 \
             'https://github.com/andre666000/Rotacjadruzyn2.0/releases/download/1.3.9-build29/DragonSpin-1.3.9.apk' \
             -o old.apk
           echo "Old APK signer output:"
           "$APKSIGNER" verify --print-certs old.apk | grep -E 'Signer|certificate' | head -n 12
           echo "New APK signer output:"
-          "$APKSIGNER" verify --print-certs DragonSpin-1.3.12.apk | grep -E 'Signer|certificate' | head -n 12
+          "$APKSIGNER" verify --print-certs DragonSpin-1.3.13.apk | grep -E 'Signer|certificate' | head -n 12
           OLD_CERT="$("$APKSIGNER" verify --print-certs old.apk | awk 'tolower($0) ~ /sha-256/ {print $NF;exit}')"
-          NEW_CERT="$("$APKSIGNER" verify --print-certs DragonSpin-1.3.12.apk | awk 'tolower($0) ~ /sha-256/ {print $NF;exit}')"
+          NEW_CERT="$("$APKSIGNER" verify --print-certs DragonSpin-1.3.13.apk | awk 'tolower($0) ~ /sha-256/ {print $NF;exit}')"
           echo "Build 29 signer SHA256: ${OLD_CERT:-missing}"
           echo "Build 32 signer SHA256: ${NEW_CERT:-missing}"
           curl -fLsS --retry 3 --max-time 180 \
@@ -65,12 +65,12 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          TAG=1.3.12-build32
+          TAG=1.3.13-build33
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release exists: refusing to overwrite it"
             exit 1
           fi
-          gh release create "$TAG" DragonSpin-1.3.12.apk \
+          gh release create "$TAG" DragonSpin-1.3.13.apk \
             --target "$GITHUB_SHA" \
-            --title "DragonSpin 1.3.12 build 32 — Czerwony Smok" \
-            --notes "Nowe czerwono-czarne tło aplikacji (bez napisu Premium), nowe wizualne ekrany rotacji i wykrywania nicków. Zachowany natywny OCR ML Kit, losowanie i uprawnienia. Podpis APK zgodny z wydaniem 1.3.9; instalacja na istniejącej aplikacji bez jej odinstalowywania. SHA256: 9f7c10337d62058c979e096908dea8252846f54db8ca66e5466dbccb770403eb."
+            --title "DragonSpin 1.3.13 build 33 — Dokładniejsze OCR" \
+            --notes "Usprawnione rozpoznawanie nicków w natywnym OCR ML Kit: model łaciński, rozróżnianie podobnych nicków i ostrożne usuwanie tagów klanowych. Wygląd Czerwony Smok i uprawnienia bez zmian. Podpis zgodny z APK 1.3.9; aktualizacja bez odinstalowywania. SHA256: 384ee09b3423e7af6734f10a8fd1a6a6fedf7b2cb95f6710a833cb471384e609."
